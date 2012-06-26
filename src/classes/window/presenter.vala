@@ -1,5 +1,5 @@
 /**
- * Presentater window
+ * Presenter window
  *
  * This file is part of pdf-presenter-console.
  *
@@ -50,6 +50,11 @@ namespace org.westhoffswelt.pdfpresenter.Window {
         protected View.Base next_view;
 
         /**
+         * View showing optional notes slide
+        */
+        protected View.Base notes_view;
+
+        /**
          * Countdown until the presentation ends
          */
         protected TimerLabel timer;
@@ -75,7 +80,7 @@ namespace org.westhoffswelt.pdfpresenter.Window {
         /**
          * Base constructor instantiating a new presenter window
          */
-        public Presenter( string pdf_filename, int screen_num ) {
+        public Presenter( string slides_pdf_filename, string notes_pdf_filename, int screen_num ) {
             base( screen_num );
 
             this.destroy.connect( (source) => {
@@ -104,7 +109,7 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 this.screen_geometry.width * Options.current_size / (double)100 
             );
             this.current_view = View.Pdf.from_pdf_file( 
-                pdf_filename,
+                slides_pdf_filename,
                 current_allocated_width,
                 bottom_position,
                 out current_scale_rect
@@ -118,11 +123,18 @@ namespace org.westhoffswelt.pdfpresenter.Window {
             // The next slide is right to the current one and takes up the
             // remaining width
             Rectangle next_scale_rect;
+            var next_bottom_position = 0;
+            var optional_divider_height = 10;
+            if(notes_pdf_filename.length > 0) {
+                next_bottom_position = (int)Math.floor((bottom_position - optional_divider_height - 10) / 2.0);
+            } else {
+                next_bottom_position = bottom_position;
+            }
             var next_allocated_width = this.screen_geometry.width - current_allocated_width;
             this.next_view = View.Pdf.from_pdf_file( 
-                pdf_filename,
+                slides_pdf_filename,
                 next_allocated_width,
-                bottom_position,
+                next_bottom_position,
                 out next_scale_rect
             );
             // Set the second slide as starting point
@@ -135,6 +147,25 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 next_scale_rect.y 
             );
 
+             // The optional notes slide is right to the current one and takes up the
+            // remaining width
+            if(notes_pdf_filename.length > 0) {
+                Rectangle notes_scale_rect;
+                this.notes_view = View.Pdf.from_pdf_file(
+                    notes_pdf_filename,
+                    next_allocated_width, //same width as next slide
+                    next_bottom_position, //same height as next slide
+                    out notes_scale_rect
+                );
+
+                // Position it at the bottom and right of the current slide
+                this.fixedLayout.put(
+                    this.notes_view,
+                    current_allocated_width + notes_scale_rect.x,
+                    next_scale_rect.height + optional_divider_height
+                );
+            }
+            
             // Color needed for the labels
             Color white;
             Color.parse( "white", out white );
@@ -266,6 +297,9 @@ namespace org.westhoffswelt.pdfpresenter.Window {
         public void next_page() {
             this.current_view.next();
             this.next_view.next();
+            if(null != this.notes_view) {
+                this.notes_view.next();
+            }
             this.update_slide_count();
 
             this.timer.start();
@@ -282,6 +316,9 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 this.next_view.previous();
             }
             this.current_view.previous();
+            if(null != this.notes_view) {
+                this.notes_view.previous();
+            }
             this.update_slide_count();
         }
 
@@ -292,6 +329,9 @@ namespace org.westhoffswelt.pdfpresenter.Window {
             try {
                 this.current_view.display( 0 );
                 this.next_view.display( 0 );
+                if(null != this.notes_view) {
+                    this.notes_view.display( 0 );
+                }
                 this.next_view.next();
             }
             catch( Renderer.RenderError e ) {
@@ -312,6 +352,9 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 this.next_view.display( 
                     page_number + 1
                 );
+                if(null != this.notes_view) {
+                    this.notes_view.display( page_number );
+                }
             }
             catch( Renderer.RenderError e ) {
                 GLib.error( "The pdf page %d could not be rendered: %s", page_number, e.message );
@@ -336,6 +379,10 @@ namespace org.westhoffswelt.pdfpresenter.Window {
             var next_prerendering_view = this.next_view as View.Prerendering;
             if( next_prerendering_view != null ) {
                 observer.monitor_view( next_prerendering_view );
+            }
+            var notes_prerendering_view = this.notes_view as View.Prerendering;
+            if( notes_prerendering_view != null ) {
+                observer.monitor_view( notes_prerendering_view );
             }
 
             // Add the cache status widget to be displayed

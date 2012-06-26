@@ -79,7 +79,7 @@ namespace org.westhoffswelt.pdfpresenter {
          * errorcode 1
          */
         protected void parse_command_line_options( string[] args ) {
-            var context = new OptionContext( "<pdf-file>" );
+            var context = new OptionContext( "<slides-pdf-file> [<notes-pdf-file>]" );
 
             context.add_main_entries( options, null );
             
@@ -92,7 +92,7 @@ namespace org.westhoffswelt.pdfpresenter {
                 Posix.exit( 1 );
             }
 
-            if ( args.length != 2 ) {
+            if ( args.length != 2 && args.length != 3) {
                 stderr.printf( "%s", context.get_help( true, null ) );
                 Posix.exit( 1 );
             }
@@ -102,8 +102,8 @@ namespace org.westhoffswelt.pdfpresenter {
          * Create and return a PresenterWindow using the specified monitor
          * while displaying the given file
          */
-        private Window.Presenter create_presenter_window( string filename, int monitor ) {
-            var presenter_window = new Window.Presenter( filename, monitor );
+        private Window.Presenter create_presenter_window( string slides_filename, string notes_filename, int monitor ) {
+            var presenter_window = new Window.Presenter( slides_filename, notes_filename, monitor );
             controller.register_controllable( presenter_window );
             presenter_window.set_cache_observer( this.cache_status );
 
@@ -136,7 +136,12 @@ namespace org.westhoffswelt.pdfpresenter {
             MutexLocks.init();
 
             this.parse_command_line_options( args );
-
+            string slides_filename = args[1];
+            string notes_filename = "";
+            if(args.length >= 3) {
+                notes_filename = args[2];
+            }
+            
             stdout.printf( "Initializing rendering...\n" );
            
             // Initialize global controller and CacheStatus, to manage
@@ -156,9 +161,9 @@ namespace org.westhoffswelt.pdfpresenter {
 
             if ( Gdk.Screen.get_default().get_n_monitors() > 1 ) {
                 this.presentation_window = 
-                    this.create_presentation_window( args[1], presentation_monitor );
+                    this.create_presentation_window( slides_filename, presentation_monitor );
                 this.presenter_window = 
-                    this.create_presenter_window( args[1], presenter_monitor );
+                    this.create_presenter_window( slides_filename, notes_filename, presenter_monitor );
             }
             else {
                 stdout.printf( "Only one screen detected falling back to simple presentation mode.\n" );
@@ -167,11 +172,11 @@ namespace org.westhoffswelt.pdfpresenter {
                 // one monitor displaying the presenter screen
                 if ( presenter_monitor == 1 ) {
                     this.presentation_window = 
-                        this.create_presentation_window( args[1], 0 );
+                        this.create_presentation_window( slides_filename, 0 );
                 }
                 else {
                     this.presenter_window = 
-                        this.create_presenter_window( args[1], 0 );
+                        this.create_presenter_window( slides_filename, notes_filename, 0 );
                 }
             }
 
