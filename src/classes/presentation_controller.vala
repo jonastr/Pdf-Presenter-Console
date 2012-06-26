@@ -70,7 +70,8 @@ namespace org.westhoffswelt.pdfpresenter {
                 case 0xff50: /* Home */
                     this.controllables_reset();
                 break;
-                case 0xffc8: /* F11 - Toggle fullscreen */
+                case 0x046: /* F */
+                case 0x066: /* f */
                     this.controllables_toggle_fullscreen();
                 break;
             }
