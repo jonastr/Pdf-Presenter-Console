@@ -70,6 +70,9 @@ namespace org.westhoffswelt.pdfpresenter {
                 case 0xff50: /* Home */
                     this.controllables_reset();
                 break;
+                case 0xffc8: /* F11 - Toggle fullscreen */
+                    this.controllables_toggle_fullscreen();
+                break;
             }
         }
 
@@ -145,6 +148,15 @@ namespace org.westhoffswelt.pdfpresenter {
         protected void controllables_goto_page( int page_number ) {
             foreach( Controllable c in this.controllables ) {
                 c.goto_page( page_number );
+            }
+        }
+        
+        /**
+         * Toggles fullscreen mode on all controllables
+         */
+        protected void controllables_toggle_fullscreen() {
+            foreach( Controllable c in this.controllables ) {
+                c.toggle_fullscreen();
             }
         }
     }

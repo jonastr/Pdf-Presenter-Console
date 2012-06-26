@@ -56,5 +56,10 @@ namespace org.westhoffswelt.pdfpresenter {
          * Display a certain page
          */
         public abstract void goto_page( int page_number );
+        
+        /**
+         * Toggles fullscreen mode
+         */
+        public abstract void toggle_fullscreen();
     }
 }

@@ -42,6 +42,14 @@ namespace org.westhoffswelt.pdfpresenter.Window {
          * seconds of inactivity
          */
         protected uint hide_cursor_timeout = 0;
+        
+        /**
+         * State variable, tells you whether the window is in fullscreen mode.
+         * Depending on your window manager, the window may not be fullscreen at all.
+         * See, e.g., http://www.pygtk.org/docs/pygtk/class-gtkwindow.html#method-gtkwindow--fullscreen
+         * The best/correct way would be to monitor the window_state_event signal...
+         */
+        protected bool is_fullscreen = true;
 
         public Fullscreen( int screen_num ) {
             var screen = Screen.get_default();
@@ -53,6 +61,7 @@ namespace org.westhoffswelt.pdfpresenter.Window {
             // before the window is mapped.
             this.move( this.screen_geometry.x, this.screen_geometry.y );
             this.fullscreen();
+            this.is_fullscreen = true;
 
             // As certain window-managers like Xfwm4 ignore movement request
             // before the window is initially moved and set up we need to
@@ -95,6 +104,7 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 // while the window is maximized. Therefore it is ensured the
                 // window is not in this state.
                 this.unfullscreen();
+                this.is_fullscreen = false;
                 this.unmaximize();
 
                 // The first movement might not have worked as expected, because of
@@ -103,6 +113,7 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 this.move( this.screen_geometry.x, this.screen_geometry.y );
 
                 this.fullscreen();
+                this.is_fullscreen = true;
             }
         }
 
@@ -156,6 +167,15 @@ namespace org.westhoffswelt.pdfpresenter.Window {
                 // another five seconds.
                 return true;
             }
+        }
+        
+        public void toggle_fullscreen() {
+            if(this.is_fullscreen) {
+                this.unfullscreen();
+            } else {
+                this.fullscreen();
+            }
+            this.is_fullscreen = !this.is_fullscreen;
         }
     }
 }
